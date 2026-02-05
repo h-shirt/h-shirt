@@ -1,0 +1,2213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H-Shirt Monitor AI</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00d9ff;
+            --secondary: #0a4d68;
+            --accent: #05c3dd;
+            --dark: #0a1929;
+            --darker: #020c1b;
+            --text: #e0f2f7;
+            --text-dim: #8b9eb3;
+            --success: #00ff88;
+            --warning: #ffa726;
+            --danger: #ff3d71;
+            --purple: #a855f7;
+            --grid: rgba(0, 217, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 50%, #0d2137 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, var(--grid) 2px, var(--grid) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, var(--grid) 2px, var(--grid) 4px);
+            pointer-events: none;
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        /* Login Page Styles */
+        .login-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: rgba(10, 25, 41, 0.85);
+            backdrop-filter: blur(20px);
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            padding: 50px 60px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 0 60px rgba(0, 217, 255, 0.3), inset 0 0 40px rgba(0, 217, 255, 0.05);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 42px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .logo p {
+            font-size: 14px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .ai-badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 15px;
+            background: linear-gradient(135deg, var(--purple), #ec4899);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.8); }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 16px;
+            font-family: 'Rajdhani', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border: none;
+            border-radius: 10px;
+            color: var(--darker);
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 217, 255, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+
+        .form-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .form-footer a:hover {
+            color: var(--accent);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+
+        .auth-switch a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .auth-switch a:hover {
+            color: var(--accent);
+        }
+
+        /* Dashboard Container */
+        .dashboard-container {
+            display: none;
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .dashboard-container.active {
+            display: block;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            background: rgba(10, 25, 41, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--primary);
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.2);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .header-badge {
+            padding: 5px 12px;
+            background: linear-gradient(135deg, var(--purple), #ec4899);
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: rgba(255, 61, 113, 0.2);
+            border: 1px solid var(--danger);
+            border-radius: 8px;
+            color: var(--danger);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: var(--danger);
+            color: var(--text);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 61, 113, 0.3);
+        }
+
+        /* Connection Bar */
+        .connection-bar {
+            display: flex;
+            gap: 15px;
+            padding: 20px 30px;
+            background: rgba(10, 25, 41, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--primary);
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.2);
+        }
+
+        .connect-btn {
+            flex: 1;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border: none;
+            border-radius: 10px;
+            color: var(--darker);
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 217, 255, 0.5);
+        }
+
+        .connect-btn.connected {
+            background: linear-gradient(135deg, var(--success), #00cc70);
+        }
+
+        .voice-btn, .disconnect-btn {
+            padding: 15px 30px;
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid var(--purple);
+            border-radius: 10px;
+            color: var(--purple);
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .voice-btn:hover, .disconnect-btn:hover {
+            background: var(--purple);
+            color: var(--text);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(168, 85, 247, 0.3);
+        }
+
+        .disconnect-btn {
+            background: rgba(255, 61, 113, 0.2);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .disconnect-btn:hover {
+            background: var(--danger);
+        }
+
+        /* Voice Assistant Panel */
+        .voice-panel {
+            padding: 20px 30px;
+            background: rgba(10, 25, 41, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--purple);
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 40px rgba(168, 85, 247, 0.2);
+        }
+
+        .voice-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .voice-header h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            color: var(--purple);
+        }
+
+        .voice-text {
+            font-size: 15px;
+            color: var(--text-dim);
+            line-height: 1.6;
+            min-height: 40px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: rgba(10, 25, 41, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--primary);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 50px rgba(0, 217, 255, 0.3);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-icon {
+            font-size: 24px;
+        }
+
+        .stat-value {
+            font-size: 48px;
+            font-weight: 900;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .stat-unit {
+            font-size: 16px;
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+
+        .stat-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 217, 255, 0.2);
+        }
+
+        .vital-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-normal {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-warning {
+            background: rgba(255, 167, 38, 0.2);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .status-danger {
+            background: rgba(255, 61, 113, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .trend {
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        /* ECG Card */
+        .ecg-card {
+            background: rgba(10, 25, 41, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--success);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.2);
+        }
+
+        .ecg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .ecg-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .clear-btn {
+            padding: 8px 16px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid var(--success);
+            border-radius: 8px;
+            color: var(--success);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: var(--success);
+            color: var(--darker);
+        }
+
+        #ecgCanvas {
+            width: 100%;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .info-card {
+            background: rgba(10, 25, 41, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--primary);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.2);
+        }
+
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .info-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(0, 217, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 217, 255, 0.1);
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-value {
+            font-size: 20px;
+            font-weight: 900;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+        }
+
+        /* Health Score */
+        .health-score-card {
+            background: rgba(10, 25, 41, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--purple);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(168, 85, 247, 0.2);
+        }
+
+        .score-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            color: var(--purple);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .score-value {
+            font-size: 72px;
+            font-weight: 900;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, var(--success), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+
+        /* AI Insights */
+        .insights-card {
+            background: rgba(10, 25, 41, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--purple);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 40px rgba(168, 85, 247, 0.2);
+        }
+
+        .insights-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .insights-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            color: var(--purple);
+        }
+
+        .insights-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .insight-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(168, 85, 247, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .insight-icon {
+            font-size: 24px;
+        }
+
+        .insight-text {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* Recommendations */
+        .recommendations-card {
+            background: rgba(10, 25, 41, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--accent);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 40px rgba(5, 195, 221, 0.2);
+        }
+
+        .rec-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .rec-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        .rec-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .rec-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(5, 195, 221, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(5, 195, 221, 0.2);
+        }
+
+        .rec-item-icon {
+            font-size: 24px;
+        }
+
+        .rec-item-text {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .action-btn {
+            padding: 15px 25px;
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Rajdhani', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: var(--darker);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 217, 255, 0.3);
+        }
+
+        /* Alerts Container */
+        .alerts-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .alert {
+            padding: 20px;
+            background: rgba(10, 25, 41, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 12px;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-danger {
+            border: 2px solid var(--danger);
+            box-shadow: 0 5px 30px rgba(255, 61, 113, 0.3);
+        }
+
+        .alert-warning {
+            border: 2px solid var(--warning);
+            box-shadow: 0 5px 30px rgba(255, 167, 38, 0.3);
+        }
+
+        .alert-info {
+            border: 2px solid var(--primary);
+            box-shadow: 0 5px 30px rgba(0, 217, 255, 0.3);
+        }
+
+        .alert-success {
+            border: 2px solid var(--success);
+            box-shadow: 0 5px 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .alert-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .alert-close:hover {
+            color: var(--text);
+        }
+
+        .alert-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+        }
+
+        .alert-title {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .alert-message {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .login-box {
+                padding: 40px 30px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .connection-bar {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Alerts Container -->
+    <div id="alertsContainer" class="alerts-container"></div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-box">
+            <div class="logo">
+                <h1>H-SHIRT</h1>
+                <p>Health Monitoring AI</p>
+                <span class="ai-badge">AI POWERED</span>
+            </div>
+
+            <!-- Sign In Form -->
+            <form id="signInForm" style="display: block;">
+                <div class="form-group">
+                    <label for="signInEmail">Email Address</label>
+                    <input type="email" id="signInEmail" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signInPassword">Password</label>
+                    <input type="password" id="signInPassword" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn">Sign In</button>
+                <div class="auth-switch">
+                    Don't have an account? <a onclick="switchToSignUp()">Sign Up</a>
+                </div>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form id="signUpForm" style="display: none;">
+                <div class="form-group">
+                    <label for="signUpName">Full Name</label>
+                    <input type="text" id="signUpName" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="signUpEmail">Email Address</label>
+                    <input type="email" id="signUpEmail" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signUpPassword">Password</label>
+                    <input type="password" id="signUpPassword" placeholder="Create a password" required>
+                </div>
+                <button type="submit" class="btn">Sign Up</button>
+                <div class="auth-switch">
+                    Already have an account? <a onclick="switchToSignIn()">Sign In</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardPage" class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">
+                <h1>H-SHIRT AI</h1>
+                <span class="header-badge">AI POWERED</span>
+            </div>
+            <div class="header-user">
+                <div class="user-info">
+                    <div class="user-name" id="userName">User</div>
+                    <div class="user-email" id="userEmail">user@example.com</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Connection Bar -->
+        <div class="connection-bar">
+            <button class="connect-btn" id="connectBtn" onclick="toggleConnection()">🔵 Connect H-Shirt</button>
+            <button class="voice-btn" onclick="toggleVoice()">🎤 Voice Assistant</button>
+        </div>
+
+        <!-- Voice Assistant Panel -->
+        <div class="voice-panel">
+            <div class="voice-header">
+                <h3>🤖 AI Voice Assistant</h3>
+            </div>
+            <div class="voice-text" id="voiceText">Click the Voice Assistant button and ask me about your health data...</div>
+        </div>
+
+        <!-- Vital Signs Grid -->
+        <div class="stats-grid">
+            <!-- Heart Rate -->
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Heart Rate</span>
+                    <span class="stat-icon">❤️</span>
+                </div>
+                <div class="stat-value">
+                    <span id="heartRate">--</span>
+                    <span class="stat-unit">BPM</span>
+                </div>
+                <div class="stat-footer">
+                    <span class="vital-status status-normal" id="hrStatus">Waiting</span>
+                    <span class="trend" id="hrTrend">→</span>
+                </div>
+            </div>
+
+            <!-- SpO2 -->
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Blood Oxygen (SpO2)</span>
+                    <span class="stat-icon">🫁</span>
+                </div>
+                <div class="stat-value">
+                    <span id="spo2">--</span>
+                    <span class="stat-unit">%</span>
+                </div>
+                <div class="stat-footer">
+                    <span class="vital-status status-normal" id="spo2Status">Waiting</span>
+                    <span class="trend" id="spo2Trend">→</span>
+                </div>
+            </div>
+
+            <!-- Temperature -->
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Body Temperature</span>
+                    <span class="stat-icon">🌡️</span>
+                </div>
+                <div class="stat-value">
+                    <span id="temperature">--</span>
+                    <span class="stat-unit">°C</span>
+                </div>
+                <div class="stat-footer">
+                    <span class="vital-status status-normal" id="tempStatus">Waiting</span>
+                    <span class="trend" id="tempTrend">→</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ECG Waveform -->
+        <div class="ecg-card">
+            <div class="ecg-header">
+                <div class="ecg-title">
+                    <span>📈</span>
+                    <span>ECG WAVEFORM (AD8232)</span>
+                </div>
+                <button class="clear-btn" onclick="clearWaveform()">Clear</button>
+            </div>
+            <canvas id="ecgCanvas"></canvas>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="info-grid">
+            <!-- Session Info -->
+            <div class="info-card">
+                <div class="info-header">
+                    <span>⏱️</span>
+                    <h3 class="info-title">SESSION INFORMATION</h3>
+                </div>
+                <div class="info-content">
+                    <div class="info-row">
+                        <span class="info-label">Session Time</span>
+                        <span class="info-value" id="sessionTime">00:00:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Avg Heart Rate</span>
+                        <span class="info-value"><span id="avgHR">--</span> BPM</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Avg SpO2</span>
+                        <span class="info-value"><span id="avgSpO2">--</span> %</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Avg Temperature</span>
+                        <span class="info-value"><span id="avgTemp">--</span> °C</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Score -->
+            <div class="health-score-card">
+                <div class="score-title">🤖 AI HEALTH SCORE</div>
+                <div class="score-value" id="healthScore">--</div>
+                <div class="score-label">out of 100</div>
+            </div>
+        </div>
+
+        <!-- AI Insights -->
+        <div class="insights-card">
+            <div class="insights-header">
+                <span>🧠</span>
+                <h3 class="insights-title">AI-POWERED INSIGHTS</h3>
+            </div>
+            <ul class="insights-list" id="insightsList">
+                <li class="insight-item">
+                    <div class="insight-icon">🔍</div>
+                    <div class="insight-text">Waiting for data to analyze...</div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- AI Recommendations -->
+        <div class="recommendations-card">
+            <div class="rec-header">
+                <span>💡</span>
+                <h3 class="rec-title">AI HEALTH RECOMMENDATIONS</h3>
+            </div>
+            <ul class="rec-list" id="recList">
+                <li class="rec-item">
+                    <div class="rec-item-icon">👋</div>
+                    <div class="rec-item-text">Connect your H-Shirt device to receive personalized health recommendations...</div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-btn" onclick="downloadReport()">
+                <span>📄</span>
+                <span>Download PDF Report</span>
+            </button>
+            <button class="action-btn" onclick="sendEmailReport()">
+                <span>📧</span>
+                <span>Email Report</span>
+            </button>
+            <button class="action-btn" onclick="clearData()">
+                <span>🔄</span>
+                <span>Clear Session Data</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== AUTHENTICATION SYSTEM ====================
+        let currentUser = '';
+        let currentEmail = '';
+        let users = JSON.parse(localStorage.getItem('hShirtUsers')) || {};
+
+        // Switch between Sign In and Sign Up
+        function switchToSignUp() {
+            document.getElementById('signInForm').style.display = 'none';
+            document.getElementById('signUpForm').style.display = 'block';
+        }
+
+        function switchToSignIn() {
+            document.getElementById('signUpForm').style.display = 'none';
+            document.getElementById('signInForm').style.display = 'block';
+        }
+
+        // Sign Up Handler
+        document.getElementById('signUpForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('signUpName').value;
+            const email = document.getElementById('signUpEmail').value;
+            const password = document.getElementById('signUpPassword').value;
+
+            if (users[email]) {
+                showAlert('warning', 'Account Exists', 'An account with this email already exists. Please sign in.');
+                return;
+            }
+
+            users[email] = { name, password };
+            localStorage.setItem('hShirtUsers', JSON.stringify(users));
+            
+            showAlert('success', 'Account Created', 'Your account has been created successfully. Please sign in.');
+            switchToSignIn();
+            
+            // Pre-fill sign in form
+            document.getElementById('signInEmail').value = email;
+        });
+
+        // Sign In Handler
+        document.getElementById('signInForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('signInEmail').value;
+            const password = document.getElementById('signInPassword').value;
+
+            if (!users[email]) {
+                showAlert('danger', 'Account Not Found', 'No account found with this email. Please sign up.');
+                return;
+            }
+
+            if (users[email].password !== password) {
+                showAlert('danger', 'Invalid Password', 'The password you entered is incorrect.');
+                return;
+            }
+
+            // Successful login
+            currentUser = users[email].name;
+            currentEmail = email;
+            
+            // Update UI
+            document.getElementById('userName').textContent = currentUser;
+            document.getElementById('userEmail').textContent = currentEmail;
+            
+            // Show dashboard
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('dashboardPage').classList.add('active');
+            
+            showAlert('success', 'Welcome Back', `Welcome back, ${currentUser}!`);
+            speak(`Welcome back ${currentUser}. H-Shirt AI is ready to monitor your health.`);
+        });
+
+        // Logout Function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                // Disconnect device if connected
+                if (isConnected) {
+                    disconnectDevice();
+                }
+                
+                // Reset current user
+                currentUser = '';
+                currentEmail = '';
+                
+                // Show login page
+                document.getElementById('dashboardPage').classList.remove('active');
+                document.getElementById('loginPage').style.display = 'flex';
+                
+                // Clear form
+                document.getElementById('signInForm').reset();
+                
+                speak('Logged out successfully. See you next time!');
+            }
+        }
+
+        // ==================== ESP32 BLUETOOTH CONNECTION ====================
+        let bluetoothDevice = null;
+        let bluetoothServer = null;
+        let characteristic = null;
+        let isConnected = false;
+
+        // ESP32 BLE Service and Characteristic UUIDs
+        // These should match your ESP32 code
+        const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';  // Main service UUID
+        const CHAR_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';      // Characteristic UUID for data
+
+        // Connect to ESP32 via Web Bluetooth API
+        async function connectDevice() {
+            try {
+                // Check if Web Bluetooth is supported
+                if (!navigator.bluetooth) {
+                    throw new Error('Web Bluetooth is not supported in this browser. Please use Chrome, Edge, or Opera.');
+                }
+
+                speak('Scanning for H-Shirt ESP32 device. Please wait.');
+                
+                // Request Bluetooth device with improved filters
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { namePrefix: 'H-Shirt' },  // Filter for devices starting with "H-Shirt"
+                        { namePrefix: 'ESP32' },    // Also accept generic ESP32 names
+                        { name: 'H-Shirt' },        // Exact name match
+                        { name: 'ESP32' }           // Exact name match for ESP32
+                    ],
+                    optionalServices: [SERVICE_UUID]
+                });
+
+                console.log('Device selected:', bluetoothDevice.name);
+                speak('Connecting to device. Please wait.');
+
+                // Connect to GATT Server with retry logic
+                bluetoothServer = await bluetoothDevice.gatt.connect();
+                console.log('GATT Server connected');
+                
+                // Get the service
+                const service = await bluetoothServer.getPrimaryService(SERVICE_UUID);
+                console.log('Service found:', SERVICE_UUID);
+                
+                // Get the characteristic
+                characteristic = await service.getCharacteristic(CHAR_UUID);
+                console.log('Characteristic found:', CHAR_UUID);
+
+                // Subscribe to notifications
+                await characteristic.startNotifications();
+                console.log('Notifications started');
+                
+                characteristic.addEventListener('characteristicvaluechanged', handleDataReceived);
+
+                // Handle disconnection
+                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+                isConnected = true;
+                document.getElementById('connectBtn').textContent = '❌ Disconnect H-Shirt';
+                document.getElementById('connectBtn').classList.add('connected');
+                
+                startSession();
+                startAIAnalysis();
+                
+                speak('H-Shirt ESP32 device successfully connected. AI monitoring is now active. Your health data is being analyzed in real time.', true);
+                showAlert('success', 'Device Connected', `${bluetoothDevice.name} successfully connected via Bluetooth. AI monitoring active.`, true);
+                
+            } catch (error) {
+                console.error('Bluetooth connection error:', error);
+                
+                let errorMessage = 'Could not connect to ESP32. ';
+                
+                if (error.name === 'NotFoundError') {
+                    errorMessage += 'No device selected. Please select your H-Shirt device from the list.';
+                } else if (error.name === 'SecurityError') {
+                    errorMessage += 'Bluetooth access denied. Please enable Bluetooth permissions.';
+                } else if (error.name === 'NetworkError') {
+                    errorMessage += 'Connection lost. Make sure device is in range and powered on.';
+                } else if (error.message.includes('not supported')) {
+                    errorMessage = error.message;
+                } else {
+                    errorMessage += 'Make sure Bluetooth is enabled and device is in range. Error: ' + error.message;
+                }
+                
+                speak('Connection failed. Please ensure Bluetooth is enabled and the ESP32 device is powered on and in range.');
+                showAlert('danger', 'Connection Failed', errorMessage);
+            }
+        }
+
+        // Toggle connection (connect or disconnect based on current state)
+        function toggleConnection() {
+            if (isConnected) {
+                disconnectDevice();
+            } else {
+                connectDevice();
+            }
+        }
+
+        // Handle disconnection
+        function onDisconnected(event) {
+            console.log('Device disconnected:', event);
+            
+            // Clean up
+            characteristic = null;
+            bluetoothServer = null;
+            isConnected = false;
+            
+            document.getElementById('connectBtn').textContent = '🔵 Connect H-Shirt';
+            document.getElementById('connectBtn').classList.remove('connected');
+            
+            speak('Device disconnected unexpectedly');
+            showAlert('warning', 'Device Disconnected', 'ESP32 device has been disconnected. Click Connect to reconnect.');
+            
+            stopSession();
+            stopAI();
+        }
+
+        // Disconnect Device
+        function disconnectDevice() {
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+                try {
+                    // Remove event listener before disconnecting
+                    if (characteristic) {
+                        characteristic.removeEventListener('characteristicvaluechanged', handleDataReceived);
+                        characteristic.stopNotifications().catch(err => console.log('Stop notifications error:', err));
+                    }
+                    bluetoothDevice.gatt.disconnect();
+                    console.log('Device disconnected successfully');
+                } catch (error) {
+                    console.error('Error during disconnect:', error);
+                }
+            }
+            
+            // Reset all connection variables
+            bluetoothDevice = null;
+            bluetoothServer = null;
+            characteristic = null;
+            isConnected = false;
+            
+            document.getElementById('connectBtn').textContent = '🔵 Connect H-Shirt';
+            document.getElementById('connectBtn').classList.remove('connected');
+            stopSession();
+            stopAI();
+            speak('H-Shirt ESP32 device disconnected');
+            showAlert('info', 'Disconnected', 'ESP32 device has been disconnected.');
+        }
+
+        // Handle incoming data from ESP32
+        function handleDataReceived(event) {
+            try {
+                const value = new TextDecoder().decode(event.target.value);
+                console.log('Received data:', value);
+                parseData(value);
+            } catch (error) {
+                console.error('Error handling received data:', error);
+            }
+        }
+
+        // Parse data format: HR:75,SPO2:98,TEMP:36.5,ECG:512
+        function parseData(data) {
+            try {
+                const parts = data.trim().split(',');
+                let hr, spo2, temp, ecg;
+
+                parts.forEach(part => {
+                    const [key, value] = part.split(':');
+                    if (!key || !value) return;
+                    
+                    const parsedValue = parseFloat(value.trim());
+                    if (isNaN(parsedValue)) return;
+                    
+                    switch(key.trim().toUpperCase()) {
+                        case 'HR':
+                            hr = parsedValue;
+                            updateHeartRate(hr);
+                            break;
+                        case 'SPO2':
+                            spo2 = parsedValue;
+                            updateSpO2(spo2);
+                            break;
+                        case 'TEMP':
+                            temp = parsedValue;
+                            updateTemperature(temp);
+                            break;
+                        case 'ECG':
+                            ecg = parsedValue;
+                            updateECG(ecg);
+                            break;
+                    }
+                });
+
+                // Only log data if we have valid vital signs
+                if (hr !== undefined && spo2 !== undefined && temp !== undefined) {
+                    dataLog.push({
+                        timestamp: new Date(),
+                        hr: hr,
+                        spo2: spo2,
+                        temp: temp
+                    });
+                    
+                    previousReadings.hr.push(hr);
+                    previousReadings.spo2.push(spo2);
+                    previousReadings.temp.push(temp);
+                    
+                    // Keep only last 50 readings
+                    if (previousReadings.hr.length > 50) {
+                        previousReadings.hr.shift();
+                        previousReadings.spo2.shift();
+                        previousReadings.temp.shift();
+                    }
+                    
+                    updateAverages();
+                    detectAnomalies(hr, spo2, temp);
+                }
+            } catch (error) {
+                console.error('Error parsing data:', error);
+            }
+        }
+
+        // ==================== REMAINING CODE (Voice, UI, AI, etc.) ====================
+        
+        // Voice Synthesis
+        const synth = window.speechSynthesis;
+        let isVoiceEnabled = false;
+
+        function speak(text, priority = false) {
+            if (!isVoiceEnabled && !priority) return;
+            
+            if (synth.speaking) synth.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            synth.speak(utterance);
+        }
+
+        function toggleVoice() {
+            isVoiceEnabled = !isVoiceEnabled;
+            if (isVoiceEnabled) {
+                speak('Voice assistant activated');
+                showAlert('success', 'Voice Enabled', 'AI voice assistant is now active');
+                startVoiceRecognition();
+            } else {
+                speak('Voice assistant deactivated');
+                showAlert('info', 'Voice Disabled', 'AI voice assistant has been disabled');
+                stopVoiceRecognition();
+            }
+        }
+
+        // Voice Recognition
+        let recognition;
+        function startVoiceRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                showAlert('warning', 'Not Supported', 'Voice recognition is not supported in your browser');
+                return;
+            }
+
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+
+            recognition.onresult = function(event) {
+                const last = event.results.length - 1;
+                const command = event.results[last][0].transcript.toLowerCase();
+                
+                document.getElementById('voiceText').textContent = `You said: "${command}"`;
+                processVoiceCommand(command);
+            };
+
+            recognition.start();
+        }
+
+        function stopVoiceRecognition() {
+            if (recognition) {
+                recognition.stop();
+            }
+        }
+
+        // Process Voice Commands
+        function processVoiceCommand(command) {
+            let response = '';
+            
+            if (command.includes('heart rate') || command.includes('pulse')) {
+                const hr = document.getElementById('heartRate').textContent;
+                response = `Your current heart rate is ${hr} beats per minute. ${getHeartRateAdvice(parseFloat(hr))}`;
+            } else if (command.includes('spo2') || command.includes('oxygen') || command.includes('saturation')) {
+                const spo2 = document.getElementById('spo2').textContent;
+                response = `Your blood oxygen saturation level is ${spo2} percent. ${getSpO2Advice(parseFloat(spo2))}`;
+            } else if (command.includes('temperature') || command.includes('temp') || command.includes('fever')) {
+                const temp = document.getElementById('temperature').textContent;
+                response = `Your body temperature is ${temp} degrees Celsius. ${getTempAdvice(parseFloat(temp))}`;
+            } else if (command.includes('health score') || command.includes('score') || command.includes('rating')) {
+                const score = document.getElementById('healthScore').textContent;
+                response = `Your AI health score is ${score} out of 100. ${getScoreAdvice(parseFloat(score))}`;
+            } else if (command.includes('email') || command.includes('send report')) {
+                response = 'Sending your health report via email now';
+                setTimeout(() => sendEmailReport(), 1000);
+            } else if (command.includes('download') || command.includes('report') || command.includes('pdf')) {
+                response = 'Generating your PDF health report now';
+                setTimeout(() => downloadReport(), 1000);
+            } else if (command.includes('status') || command.includes('how am i') || command.includes('health')) {
+                const hr = document.getElementById('heartRate').textContent;
+                const spo2 = document.getElementById('spo2').textContent;
+                const temp = document.getElementById('temperature').textContent;
+                response = `Your current health status: Heart rate ${hr} BPM, oxygen level ${spo2} percent, temperature ${temp} degrees. Overall, your vitals ${hr !== '--' ? 'look good' : 'are not available yet'}.`;
+            } else if (command.includes('connect') || command.includes('device')) {
+                response = 'Please click the connect H-Shirt button to pair your ESP32 device';
+            } else if (command.includes('help') || command.includes('what can you do')) {
+                response = 'I can tell you about your heart rate, oxygen level, temperature, health score, send email reports, or generate PDF reports. Just ask me!';
+            } else {
+                response = 'I can help you with heart rate, oxygen levels, temperature, health scores, and generating reports. What would you like to know?';
+            }
+            
+            document.getElementById('voiceText').textContent = response;
+            speak(response);
+        }
+
+        // AI Advice Functions
+        function getHeartRateAdvice(hr) {
+            if (hr >= 60 && hr <= 100) return 'This is within the normal range. Your heart is functioning well.';
+            if (hr > 100 && hr <= 120) return 'This is slightly elevated. Try to relax and take deep breaths.';
+            if (hr > 120) return 'This is high. Please sit down, relax, and if it persists, consult a doctor.';
+            if (hr < 60) return 'This is lower than normal. If you are not an athlete, please consult your doctor.';
+            return '';
+        }
+
+        function getSpO2Advice(spo2) {
+            if (spo2 >= 95) return 'This is excellent. Your oxygen levels are optimal.';
+            if (spo2 >= 90 && spo2 < 95) return 'This is slightly low. Try deep breathing exercises.';
+            if (spo2 < 90) return 'This is concerning. Please consult a healthcare professional immediately.';
+            return '';
+        }
+
+        function getTempAdvice(temp) {
+            if (temp >= 36.1 && temp <= 37.2) return 'This is normal. Your body temperature is healthy.';
+            if (temp > 37.2 && temp <= 38) return 'This is slightly elevated. Stay hydrated and monitor for fever.';
+            if (temp > 38) return 'You may have a fever. Rest, stay hydrated, and consider seeing a doctor.';
+            if (temp < 36.1) return 'This is lower than normal. Keep warm and monitor your temperature.';
+            return '';
+        }
+
+        function getScoreAdvice(score) {
+            if (score >= 85) return 'Excellent health! Keep up the good work with your current lifestyle.';
+            if (score >= 70 && score < 85) return 'Good health overall. Minor improvements can help you reach optimal health.';
+            if (score >= 50 && score < 70) return 'Your health needs attention. Follow the AI recommendations provided.';
+            if (score < 50) return 'Your vitals show concerning patterns. Please consult a healthcare professional.';
+            return '';
+        }
+
+        // Alert System
+        function showAlert(type, title, message, voiceAlert = false) {
+            const alertsContainer = document.getElementById('alertsContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            
+            const icons = {
+                danger: '⚠️',
+                warning: '⚡',
+                info: '💡',
+                success: '✓'
+            };
+            
+            alert.innerHTML = `
+                <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                <div class="alert-header">
+                    <span class="alert-icon">${icons[type]}</span>
+                    <span class="alert-title">${title}</span>
+                </div>
+                <div class="alert-message">${message}</div>
+            `;
+            
+            alertsContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                if (alert.parentElement) alert.remove();
+            }, 10000);
+            
+            if ((type === 'danger' || type === 'warning') || voiceAlert) {
+                speak(`Alert: ${title}. ${message}`, true);
+            }
+        }
+
+        // Data Management
+        let dataLog = [];
+        let previousReadings = {
+            hr: [],
+            spo2: [],
+            temp: []
+        };
+        let sessionStartTime = null;
+        let sessionTimer = null;
+        let aiAnalysisTimer = null;
+        let anomalyDetectionActive = false;
+
+        let baselineHR = 75;
+        let baselineSPO2 = 98;
+        let baselineTemp = 36.6;
+
+        // ECG Canvas
+        const canvas = document.getElementById('ecgCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        let ecgData = [];
+        const maxDataPoints = 200;
+
+        // Update Functions
+        function updateHeartRate(value) {
+            document.getElementById('heartRate').textContent = Math.round(value);
+            
+            const statusEl = document.getElementById('hrStatus');
+            if (value >= 60 && value <= 100) {
+                statusEl.textContent = 'Normal';
+                statusEl.className = 'vital-status status-normal';
+            } else if ((value > 100 && value <= 120) || (value >= 50 && value < 60)) {
+                statusEl.textContent = 'Elevated';
+                statusEl.className = 'vital-status status-warning';
+            } else {
+                statusEl.textContent = 'Abnormal';
+                statusEl.className = 'vital-status status-danger';
+            }
+            
+            updateTrend('hrTrend', value, baselineHR);
+        }
+
+        function updateSpO2(value) {
+            document.getElementById('spo2').textContent = Math.round(value);
+            
+            const statusEl = document.getElementById('spo2Status');
+            if (value >= 95) {
+                statusEl.textContent = 'Excellent';
+                statusEl.className = 'vital-status status-normal';
+            } else if (value >= 90 && value < 95) {
+                statusEl.textContent = 'Low';
+                statusEl.className = 'vital-status status-warning';
+            } else {
+                statusEl.textContent = 'Critical';
+                statusEl.className = 'vital-status status-danger';
+            }
+            
+            updateTrend('spo2Trend', value, baselineSPO2);
+        }
+
+        function updateTemperature(value) {
+            document.getElementById('temperature').textContent = value.toFixed(1);
+            
+            const statusEl = document.getElementById('tempStatus');
+            if (value >= 36.1 && value <= 37.2) {
+                statusEl.textContent = 'Normal';
+                statusEl.className = 'vital-status status-normal';
+            } else if (value > 37.2 && value <= 38.0) {
+                statusEl.textContent = 'Elevated';
+                statusEl.className = 'vital-status status-warning';
+            } else {
+                statusEl.textContent = 'Abnormal';
+                statusEl.className = 'vital-status status-danger';
+            }
+            
+            updateTrend('tempTrend', value, baselineTemp);
+        }
+
+        function updateTrend(elementId, current, baseline) {
+            const trendEl = document.getElementById(elementId);
+            const diff = current - baseline;
+            
+            if (Math.abs(diff) < 2) {
+                trendEl.textContent = '→';
+                trendEl.style.color = 'var(--text-dim)';
+            } else if (diff > 0) {
+                trendEl.textContent = '↑';
+                trendEl.style.color = 'var(--danger)';
+            } else {
+                trendEl.textContent = '↓';
+                trendEl.style.color = 'var(--primary)';
+            }
+        }
+
+        function updateECG(value) {
+            ecgData.push(value);
+            if (ecgData.length > maxDataPoints) {
+                ecgData.shift();
+            }
+            drawECG();
+        }
+
+        function drawECG() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(0, 217, 255, 0.1)';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < canvas.width; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+
+            // Draw waveform
+            if (ecgData.length > 1) {
+                ctx.strokeStyle = '#00ff88';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                const step = canvas.width / maxDataPoints;
+                const scaleY = canvas.height / 4096;
+                
+                for (let i = 0; i < ecgData.length; i++) {
+                    const x = i * step;
+                    const y = canvas.height - (ecgData[i] * scaleY);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+            }
+        }
+
+        function clearWaveform() {
+            ecgData = [];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            speak('ECG waveform cleared');
+        }
+
+        // Session Management
+        function startSession() {
+            sessionStartTime = new Date();
+            dataLog = [];
+            sessionTimer = setInterval(updateSessionTime, 1000);
+        }
+
+        function stopSession() {
+            if (sessionTimer) clearInterval(sessionTimer);
+        }
+
+        function updateSessionTime() {
+            const now = new Date();
+            const diff = now - sessionStartTime;
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            
+            document.getElementById('sessionTime').textContent = 
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function updateAverages() {
+            if (dataLog.length === 0) return;
+            
+            const avgHR = dataLog.reduce((sum, d) => sum + d.hr, 0) / dataLog.length;
+            const avgSpO2 = dataLog.reduce((sum, d) => sum + d.spo2, 0) / dataLog.length;
+            const avgTemp = dataLog.reduce((sum, d) => sum + d.temp, 0) / dataLog.length;
+            
+            document.getElementById('avgHR').textContent = Math.round(avgHR);
+            document.getElementById('avgSpO2').textContent = Math.round(avgSpO2);
+            document.getElementById('avgTemp').textContent = avgTemp.toFixed(1);
+            
+            if (dataLog.length > 20) {
+                baselineHR = avgHR;
+                baselineSPO2 = avgSpO2;
+                baselineTemp = avgTemp;
+            }
+            
+            updateHealthScore();
+        }
+
+        // AI Analysis
+        function startAIAnalysis() {
+            anomalyDetectionActive = true;
+            aiAnalysisTimer = setInterval(generateAIInsights, 30000);
+            generateAIInsights();
+            updateRecommendations();
+        }
+
+        function stopAI() {
+            anomalyDetectionActive = false;
+            if (aiAnalysisTimer) clearInterval(aiAnalysisTimer);
+        }
+
+        function detectAnomalies(hr, spo2, temp) {
+            if (!anomalyDetectionActive || previousReadings.hr.length < 10) return;
+            
+            const recentHR = previousReadings.hr.slice(-5);
+            const avgRecentHR = recentHR.reduce((a, b) => a + b, 0) / recentHR.length;
+            const hrChange = Math.abs(hr - avgRecentHR);
+            
+            if (hrChange > 20) {
+                showAlert('warning', 'Anomaly Detected', `Sudden heart rate change: ${Math.round(hrChange)} BPM variation detected`, true);
+            }
+            
+            if (hr > 120) {
+                showAlert('danger', 'High Heart Rate Alert', 'Your heart rate is significantly elevated. Please rest and breathe deeply. Consult a doctor if it persists.', true);
+            }
+            
+            if (spo2 < 92) {
+                showAlert('danger', 'Low Oxygen Alert', 'Your blood oxygen level is critically low. Take deep breaths immediately. If this persists, seek medical attention.', true);
+            }
+            
+            if (temp > 38.0) {
+                showAlert('warning', 'Elevated Temperature', 'Your body temperature is elevated. You may have a fever. Stay hydrated and monitor your symptoms.', true);
+            }
+            
+            const hrVariability = calculateVariability(previousReadings.hr);
+            if (hrVariability > 15) {
+                showAlert('info', 'Irregular Pattern Detected', 'AI detected irregular heart rate pattern. Monitoring closely for any concerning changes.');
+            }
+        }
+
+        function calculateVariability(data) {
+            if (data.length < 2) return 0;
+            const mean = data.reduce((a, b) => a + b, 0) / data.length;
+            const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length;
+            return Math.sqrt(variance);
+        }
+
+        function generateAIInsights() {
+            const insights = [];
+            
+            if (dataLog.length > 0) {
+                const avgHR = dataLog.reduce((sum, d) => sum + d.hr, 0) / dataLog.length;
+                const avgSpO2 = dataLog.reduce((sum, d) => sum + d.spo2, 0) / dataLog.length;
+                const avgTemp = dataLog.reduce((sum, d) => sum + d.temp, 0) / dataLog.length;
+                
+                if (avgHR >= 60 && avgHR <= 100) {
+                    insights.push({
+                        icon: '💚',
+                        text: `Excellent cardiovascular performance! Your average heart rate of ${Math.round(avgHR)} BPM indicates your heart is functioning optimally. This is within the ideal range for resting heart rate, suggesting good cardiovascular fitness.`
+                    });
+                } else if (avgHR > 100) {
+                    insights.push({
+                        icon: '⚡',
+                        text: `Elevated heart rate detected at ${Math.round(avgHR)} BPM. This could be due to physical activity, stress, caffeine, or anxiety. AI recommends: practice deep breathing, ensure adequate hydration, and consider reducing stimulant intake.`
+                    });
+                } else if (avgHR < 60) {
+                    insights.push({
+                        icon: '🏃',
+                        text: `Low resting heart rate at ${Math.round(avgHR)} BPM. If you're an athlete, this indicates excellent cardiovascular conditioning. Otherwise, consider consulting a healthcare provider to rule out bradycardia.`
+                    });
+                }
+                
+                if (avgSpO2 >= 95) {
+                    insights.push({
+                        icon: '🫁',
+                        text: `Outstanding oxygen saturation at ${Math.round(avgSpO2)}%! Your lungs are functioning excellently, ensuring optimal oxygen delivery to all body tissues. This supports efficient cellular metabolism and overall vitality.`
+                    });
+                } else if (avgSpO2 >= 90 && avgSpO2 < 95) {
+                    insights.push({
+                        icon: '💨',
+                        text: `Your oxygen saturation is ${Math.round(avgSpO2)}%, which is slightly below optimal. AI recommends: Practice diaphragmatic breathing exercises 3 times daily, maintain good posture to allow full lung expansion, and ensure you're getting regular cardiovascular exercise.`
+                    });
+                }
+                
+                if (avgTemp >= 36.1 && avgTemp <= 37.2) {
+                    insights.push({
+                        icon: '🌡️',
+                        text: `Body temperature is perfectly regulated at ${avgTemp.toFixed(1)}°C. This indicates healthy metabolic function and effective thermoregulation. Your body's internal systems are working harmoniously.`
+                    });
+                } else if (avgTemp > 37.2) {
+                    insights.push({
+                        icon: '🔥',
+                        text: `Temperature slightly elevated at ${avgTemp.toFixed(1)}°C. This could indicate mild inflammation, stress response, or early signs of infection. Monitor closely and ensure adequate hydration. If it persists or increases, consult your doctor.`
+                    });
+                }
+            } else {
+                insights.push({
+                    icon: '🔍',
+                    text: 'Waiting for data to analyze. Once connected, AI will continuously monitor your vitals and provide real-time health insights...'
+                });
+            }
+            
+            const insightsList = document.getElementById('insightsList');
+            if (insights.length > 0) {
+                insightsList.innerHTML = insights.map(insight => `
+                    <li class="insight-item">
+                        <div class="insight-icon">${insight.icon}</div>
+                        <div class="insight-text">${insight.text}</div>
+                    </li>
+                `).join('');
+            }
+            
+            updateRecommendations();
+        }
+
+        function updateHealthScore() {
+            if (dataLog.length === 0) {
+                document.getElementById('healthScore').textContent = '--';
+                return;
+            }
+            
+            const currentHR = parseFloat(document.getElementById('heartRate').textContent);
+            const currentSpO2 = parseFloat(document.getElementById('spo2').textContent);
+            const currentTemp = parseFloat(document.getElementById('temperature').textContent);
+            
+            let score = 100;
+            
+            // Heart Rate scoring
+            if (currentHR >= 60 && currentHR <= 100) {
+                score += 0;
+            } else if ((currentHR > 100 && currentHR <= 120) || (currentHR >= 50 && currentHR < 60)) {
+                score -= 15;
+            } else {
+                score -= 30;
+            }
+            
+            // SpO2 scoring
+            if (currentSpO2 >= 95) {
+                score += 0;
+            } else if (currentSpO2 >= 90 && currentSpO2 < 95) {
+                score -= 20;
+            } else {
+                score -= 40;
+            }
+            
+            // Temperature scoring
+            if (currentTemp >= 36.1 && currentTemp <= 37.2) {
+                score += 0;
+            } else if ((currentTemp > 37.2 && currentTemp <= 38.0) || (currentTemp >= 35.5 && currentTemp < 36.1)) {
+                score -= 15;
+            } else {
+                score -= 30;
+            }
+            
+            score = Math.max(0, Math.min(100, score));
+            
+            document.getElementById('healthScore').textContent = Math.round(score);
+            
+            const scoreEl = document.getElementById('healthScore');
+            if (score >= 85) {
+                scoreEl.style.background = 'linear-gradient(135deg, var(--success), var(--primary))';
+            } else if (score >= 70) {
+                scoreEl.style.background = 'linear-gradient(135deg, var(--warning), var(--primary))';
+            } else {
+                scoreEl.style.background = 'linear-gradient(135deg, var(--danger), var(--warning))';
+            }
+            scoreEl.style.webkitBackgroundClip = 'text';
+            scoreEl.style.webkitTextFillColor = 'transparent';
+        }
+
+        function updateRecommendations() {
+            const recommendations = [];
+            
+            if (dataLog.length > 0) {
+                const currentHR = parseFloat(document.getElementById('heartRate').textContent);
+                const currentSpO2 = parseFloat(document.getElementById('spo2').textContent);
+                const currentTemp = parseFloat(document.getElementById('temperature').textContent);
+                
+                if (currentHR > 100) {
+                    recommendations.push({
+                        icon: '🧘',
+                        text: 'Elevated heart rate detected. AI recommends: Box breathing technique - Inhale for 4 seconds, hold for 4 seconds, exhale for 4 seconds, hold for 4 seconds. Repeat 5 times. This activates your parasympathetic nervous system for natural heart rate reduction.'
+                    });
+                }
+                
+                if (currentSpO2 < 95) {
+                    recommendations.push({
+                        icon: '💨',
+                        text: 'Low oxygen saturation detected. AI recommends: Pursed-lip breathing - Inhale through nose for 2 counts, exhale through pursed lips for 4 counts. Additionally, try light stretching or walking to improve circulation and lung expansion.'
+                    });
+                }
+                
+                if (currentTemp > 37.5) {
+                    recommendations.push({
+                        icon: '💧',
+                        text: 'Temperature elevated. AI recommends: Hydrate with cool (not cold) water - aim for 250ml every hour. Rest in a cool environment. Apply cool compress to forehead, neck, and wrists. Monitor for other fever symptoms like chills or body aches.'
+                    });
+                } else if (currentTemp > 37.2) {
+                    recommendations.push({
+                        icon: '🌊',
+                        text: 'Slightly elevated temperature. AI recommends: Increase water intake to 2-3 liters daily. Avoid strenuous activity. Dress in light, breathable clothing. If working in warm environment, take regular cooling breaks.'
+                    });
+                }
+                
+                const avgHR = dataLog.reduce((sum, d) => sum + d.hr, 0) / dataLog.length;
+                if (avgHR < 65 && dataLog.length > 30) {
+                    recommendations.push({
+                        icon: '🏃',
+                        text: 'Low resting heart rate detected. If you\'re not an athlete, AI recommends: Gentle cardiovascular exercise like brisk walking 30 minutes daily. If accompanied by fatigue or dizziness, consult your doctor to rule out bradycardia or thyroid issues.'
+                    });
+                }
+                
+                const hrVar = calculateVariability(previousReadings.hr);
+                if (hrVar > 12) {
+                    recommendations.push({
+                        icon: '😌',
+                        text: 'High heart rate variability detected, suggesting possible stress response. AI recommends: Progressive muscle relaxation - tense each muscle group for 5 seconds, then release. Start from toes, work up to head. Also consider mindfulness meditation for 10-15 minutes daily.'
+                    });
+                }
+                
+                const spO2Var = calculateVariability(previousReadings.spo2);
+                if (spO2Var > 3) {
+                    recommendations.push({
+                        icon: '🫁',
+                        text: 'Fluctuating oxygen levels detected. AI recommends: Practice diaphragmatic breathing - Place hand on belly, breathe deeply so belly rises not chest. Do this for 5 minutes, 3 times daily. Maintain good posture to allow full lung expansion.'
+                    });
+                }
+                
+                if (currentHR >= 60 && currentHR <= 100 && currentSpO2 >= 95 && currentTemp >= 36.1 && currentTemp <= 37.2) {
+                    recommendations.push({
+                        icon: '✨',
+                        text: 'Excellent! All vitals in healthy range. AI recommends to maintain: Continue current healthy habits. Ensure 7-9 hours sleep nightly. Stay hydrated with 2-3L water daily. Incorporate 150 minutes moderate aerobic activity weekly. Maintain balanced nutrition rich in fruits, vegetables, and lean proteins.'
+                    });
+                }
+
+                if (dataLog.length > 60) {
+                    recommendations.push({
+                        icon: '📊',
+                        text: 'Extended monitoring session detected. AI recommends: Take a 5-minute break to stretch. Look away from screens. Walk around to prevent prolonged sitting. This helps maintain healthy circulation and reduces eye strain.'
+                    });
+                }
+            } else {
+                recommendations.push({
+                    icon: '👋',
+                    text: 'Welcome to H-Shirt AI Health Assistant! To get started: 1) Ensure your H-Shirt ESP32 device is powered on. 2) Click "Connect H-Shirt" button above. 3) Select your device from the Bluetooth list. Once connected, AI will continuously analyze your vitals and provide personalized health insights in real-time.'
+                });
+            }
+            
+            const recList = document.getElementById('recList');
+            if (recommendations.length > 0) {
+                recList.innerHTML = recommendations.map(rec => `
+                    <li class="rec-item">
+                        <div class="rec-item-icon">${rec.icon}</div>
+                        <div class="rec-item-text">${rec.text}</div>
+                    </li>
+                `).join('');
+            }
+        }
+
+        // PDF Report
+        async function downloadReport() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(24);
+            doc.setTextColor(0, 217, 255);
+            doc.text('H-Shirt AI Health Report', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.setTextColor(168, 85, 247);
+            doc.text('🤖 AI-POWERED ANALYSIS', 105, 28, { align: 'center' });
+            doc.text('Sensors: ESP32, MAX30102, MLX90614, AD8232', 105, 34, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Patient: ${currentUser}`, 20, 48);
+            doc.text(`Email: ${currentEmail}`, 20, 55);
+            doc.text(`Date: ${new Date().toLocaleString()}`, 20, 62);
+            doc.text(`Session Duration: ${document.getElementById('sessionTime').textContent}`, 20, 69);
+            
+            const healthScore = document.getElementById('healthScore').textContent;
+            doc.setFontSize(16);
+            doc.setTextColor(168, 85, 247);
+            doc.text('AI Health Score', 20, 85);
+            doc.setFontSize(36);
+            doc.text(`${healthScore}/100`, 20, 98);
+            
+            doc.setFontSize(16);
+            doc.setTextColor(0, 120, 150);
+            doc.text('Current Vital Signs', 20, 118);
+            
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Heart Rate: ${document.getElementById('heartRate').textContent} BPM`, 20, 130);
+            doc.text(`SpO2: ${document.getElementById('spo2').textContent} %`, 20, 137);
+            doc.text(`Temperature: ${document.getElementById('temperature').textContent} °C`, 20, 144);
+            
+            if (dataLog.length > 0) {
+                const avgHR = dataLog.reduce((sum, d) => sum + d.hr, 0) / dataLog.length;
+                const avgSpO2 = dataLog.reduce((sum, d) => sum + d.spo2, 0) / dataLog.length;
+                const avgTemp = dataLog.reduce((sum, d) => sum + d.temp, 0) / dataLog.length;
+                
+                doc.setFontSize(16);
+                doc.setTextColor(0, 120, 150);
+                doc.text('Session Averages', 20, 160);
+                
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Average Heart Rate: ${Math.round(avgHR)} BPM`, 20, 172);
+                doc.text(`Average SpO2: ${Math.round(avgSpO2)} %`, 20, 179);
+                doc.text(`Average Temperature: ${avgTemp.toFixed(1)} °C`, 20, 186);
+                
+                doc.setFontSize(16);
+                doc.setTextColor(168, 85, 247);
+                doc.text('AI Analysis & Insights', 20, 202);
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                
+                const insights = Array.from(document.querySelectorAll('.insight-text')).map(el => el.textContent);
+                let yPos = 212;
+                insights.forEach((insight, i) => {
+                    const lines = doc.splitTextToSize(`• ${insight}`, 170);
+                    doc.text(lines, 20, yPos);
+                    yPos += lines.length * 5 + 3;
+                });
+            }
+            
+            doc.setFontSize(8);
+            doc.setTextColor(128, 128, 128);
+            doc.text('H-Shirt Monitor AI - Advanced Health Monitoring System', 105, 285, { align: 'center' });
+            
+            doc.save(`H-Shirt-AI-Report-${currentUser}-${new Date().toISOString().split('T')[0]}.pdf`);
+            
+            speak('PDF report has been downloaded successfully');
+            showAlert('success', 'Report Downloaded', 'Your AI-powered health report has been saved.');
+        }
+
+        // Email Report
+        function sendEmailReport() {
+            const subject = `H-Shirt AI Health Report - ${currentUser}`;
+            const body = `
+Health Report for ${currentUser}
+Generated: ${new Date().toLocaleString()}
+
+Current Vitals:
+- Heart Rate: ${document.getElementById('heartRate').textContent} BPM
+- SpO2: ${document.getElementById('spo2').textContent} %
+- Temperature: ${document.getElementById('temperature').textContent} °C
+
+Session Averages:
+- Avg Heart Rate: ${document.getElementById('avgHR').textContent} BPM
+- Avg SpO2: ${document.getElementById('avgSpO2').textContent} %
+- Avg Temperature: ${document.getElementById('avgTemp').textContent} °C
+
+AI Health Score: ${document.getElementById('healthScore').textContent}/100
+
+This is an automated report from H-Shirt AI Health Monitoring System.
+            `;
+            
+            window.location.href = `mailto:${currentEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            speak('Opening email client to send your health report');
+            showAlert('info', 'Email Report', 'Email client has been opened. Please send the email from your email application.');
+        }
+
+        // Clear Data
+        function clearData() {
+            if (confirm('Are you sure you want to clear all session data?')) {
+                dataLog = [];
+                previousReadings = {
+                    hr: [],
+                    spo2: [],
+                    temp: []
+                };
+                ecgData = [];
+                
+                document.getElementById('avgHR').textContent = '--';
+                document.getElementById('avgSpO2').textContent = '--';
+                document.getElementById('avgTemp').textContent = '--';
+                document.getElementById('healthScore').textContent = '--';
+                
+                clearWaveform();
+                
+                speak('Session data cleared');
+                showAlert('success', 'Data Cleared', 'All session data has been cleared.');            }
+        }
+    </script>
+</body>
+</html>
